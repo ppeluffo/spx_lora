@@ -109,6 +109,140 @@ int16_t free_size = sizeof(txbuffer);
 
 	// LORA
 
+	// lora tx {u08|u16|u32|float} values
+	if ( strcmp_P( argv[1], PSTR("tx")) == 0)  {
+		lora_test_tx( argv );
+		pv_snprintfP_OK();
+		return;
+	}
+
+	// lora payload {u08|u16|u32|float} value
+	if ( strcmp_P( argv[1], PSTR("payload")) == 0)  {
+		lora_test_payload( argv[2], argv[3]);
+		pv_snprintfP_OK();
+		return;
+	}
+	// lora scanchannels
+	if ( strcmp_P( argv[1], PSTR("scanchannels")) == 0)  {
+		lora_scan_all_channels();
+		pv_snprintfP_OK();
+		return;
+	}
+
+	// lora configallch {Lmask Mmask Hmask}
+	if ( strcmp_P( argv[1], PSTR("configallch")) == 0)  {
+		lora_enable_working_channels( true, argv[2], argv[3], argv[4], argv[5], argv[6] );
+		pv_snprintfP_OK();
+		return;
+	}
+
+	// lora chenable
+	if ( strcmp_P( argv[1], PSTR("chenable")) == 0)  {
+		if (!strcmp_P( strupr(argv[3]), PSTR("ON"))) {
+			lora_enable_channel( true, atoi(argv[2]), 1);
+			return;
+		}	else if (!strcmp_P( strupr(argv[3]), PSTR("OFF"))) {
+			lora_enable_channel( true, atoi(argv[2]), 0);
+			return;
+		}
+		pv_snprintfP_ERR();
+		return;
+	}
+
+	// lora getchstatus
+	if ( strcmp_P( argv[1], PSTR("getchstatus")) == 0)  {
+		lora_getchstatus( true, atoi(argv[2]), NULL, NULL );
+		pv_snprintfP_OK();
+		return;
+	}
+
+	// lora sysreset
+	if ( strcmp_P( argv[1], PSTR("sysreset")) == 0)  {
+		( lora_sys_reset(true) )?  pv_snprintfP_OK() : pv_snprintfP_ERR();
+		return;
+	}
+
+	// lora sysgetver
+	if ( strcmp_P( argv[1], PSTR("sysgetver")) == 0)  {
+		xprintf_P(PSTR("VER->%s\r\n"), lora_sys_get_ver(true));
+		return;
+	}
+
+	// lora macsetkeys
+	if ( strcmp_P( argv[1], PSTR("macsetkeys")) == 0)  {
+		if (!strcmp_P( strupr(argv[2]), PSTR("ABP"))) {
+			lora_mac_set_keys_abp(true);
+			return;
+		}	else if (!strcmp_P( strupr(argv[2]), PSTR("OTAA"))) {
+			lora_mac_set_keys_otaa(true);
+			return;
+		}
+		pv_snprintfP_ERR();
+		return;
+	}
+
+	// lora macgetstatus
+	if ( strcmp_P( argv[1], PSTR("macgetstatus")) == 0)  {
+		xprintf_P(PSTR("status_word=0x%0X\r\n"), lora_mac_get_status( true ) );
+		return;
+	}
+
+	// lora macreset
+	if ( strcmp_P( argv[1], PSTR("macreset")) == 0)  {
+		lora_mac_reset( true );
+		return;
+	}
+
+	// lora macgetsync
+	if ( strcmp_P( argv[1], PSTR("macgetsync")) == 0)  {
+		xprintf_P(PSTR("sync=0x%0X\r\n"), lora_mac_get_sync( true ) );
+		return;
+	}
+
+	// lora macgetupctr
+	if ( strcmp_P( argv[1], PSTR("macgetupctr")) == 0)  {
+		xprintf_P(PSTR("upctr=%lu\r\n"), lora_mac_get_upctr( true ) );
+		return;
+	}
+
+	// lora macjoin
+	if ( strcmp_P( argv[1], PSTR("macjoin")) == 0)  {
+		if (!strcmp_P( strupr(argv[2]), PSTR("ABP"))) {
+			xprintf_P(PSTR("join_exit_code=%d\r\n"), lora_mac_join_abp(true) );
+			return;
+		}	else if (!strcmp_P( strupr(argv[2]), PSTR("OTAA"))) {
+			xprintf_P(PSTR("join_exit_code=%d\r\n"), lora_mac_join_otaa(true));
+			return;
+		}
+		pv_snprintfP_ERR();
+		return;
+	}
+
+	// lora connect
+	if ( strcmp_P( argv[1], PSTR("connect")) == 0)  {
+		if (!strcmp_P( strupr(argv[2]), PSTR("ABP"))) {
+			xprintf_P(PSTR("conn_exit_code=%d\r\n"), lora_connect_abp(true) );
+			return;
+		}	else if (!strcmp_P( strupr(argv[2]), PSTR("OTAA"))) {
+			xprintf_P(PSTR("conn_exit_code=%d\r\n"), lora_connect_otaa(true) );
+			return;
+		}
+		return;
+	}
+
+	// lora netstatus
+	if ( strcmp_P( argv[1], PSTR("netstatus")) == 0)  {
+		xprintf_P(PSTR("net stats = %d\r\n"), lora_net_status(true));
+		return;
+	}
+
+	// lora read
+	if ( strcmp_P( argv[1], PSTR("read")) == 0)  {
+		lora_read_rx_data();
+		lora_print_rx_data();
+		return;
+	}
+
 	// lora loopback
 	if ( strcmp_P( argv[1], PSTR("loopback")) == 0)  {
 		if (!strcmp_P( strupr(argv[2]), PSTR("ON"))) {
@@ -119,63 +253,9 @@ int16_t free_size = sizeof(txbuffer);
 		return;
 	}
 
-	// lora setupkeys
-	if ( strcmp_P( argv[1], PSTR("macsetkeys")) == 0)  {
-		if (!strcmp_P( strupr(argv[2]), PSTR("ABP"))) {
-			lora_mac_set_keys_abp();
-			return;
-		}	else if (!strcmp_P( strupr(argv[2]), PSTR("OTAA"))) {
-			lora_mac_set_keys_otaa();
-			return;
-		}
-		return;
-	}
-
-	// lora macgetstatus
-	if ( strcmp_P( argv[1], PSTR("macgetstatus")) == 0)  {
-		lora_mac_get_status();
-		return;
-	}
-
-	// lora macreset
-	if ( strcmp_P( argv[1], PSTR("macreset")) == 0)  {
-		lora_mac_reset();
-		return;
-	}
-
-	// lora sysver
-	if ( strcmp_P( argv[1], PSTR("sysgetver")) == 0)  {
-		lora_sys_get_ver();
-		return;
-	}
-
-	// lora sysreset
-	if ( strcmp_P( argv[1], PSTR("sysreset")) == 0)  {
-		lora_sys_reset();
-		return;
-	}
-
-	// lora connect
-	if ( strcmp_P( argv[1], PSTR("connect")) == 0)  {
-		if (!strcmp_P( strupr(argv[2]), PSTR("ABP"))) {
-			lora_connect_abp();
-			return;
-		}	else if (!strcmp_P( strupr(argv[2]), PSTR("OTAA"))) {
-			lora_connect_otaa();
-			return;
-		}
-		return;
-	}
-
-	// lora read
-	if ( strcmp_P( argv[1], PSTR("read")) == 0)  {
-		lora_read_rx_data();
-		lora_print_RX_buffer();
-		return;
-	}
-
 	// Comandos no manejados: directo al modulo
-	lora_flush_RX_buffer();
+	xprintf_P(PSTR("Comando no interpretado.\r\n"));
+	lora_flush_rx_buffer();
 	i = 1;
 	j = 0;
 	while ( argv[i] != NULL ) {
@@ -474,10 +554,13 @@ static void cmdHelpFunction(void)
 	// HELP LORA
 	if (!strcmp_P( strupr(argv[1]), PSTR("LORA"))) {
 		xprintf_P( PSTR("-lora\r\n"));
-		xprintf_P( PSTR("  connect {join}\r\n"));
-		xprintf_P( PSTR("  sysreset,sysgetver,macreset\r\n"));
-		xprintf_P( PSTR("  macgetstatus,macsetkeys{join}\r\n"));
-		xprintf_P( PSTR("  loopback {on|off}\r\n"));
+		xprintf_P( PSTR("  connect {abp|otaa}\r\n"));
+		xprintf_P( PSTR("  sysreset, sysgetver\r\n"));
+		xprintf_P( PSTR("  macgetstatus, macsetkeys{abp|otaa}, macjoin{abp|otaa}, macreset, macgetsync, macgetupctr\r\n"));
+		xprintf_P( PSTR("  netstatus, getchstatus, chenable ch_id {on|off}, configallch {mk16 mk32 mk48 mk64 mk80}\r\n"));
+		xprintf_P( PSTR("  scanchannels, loopback {on|off}\r\n"));
+		xprintf_P( PSTR("  payload {u08|u16|u32|float} value\r\n"));
+		xprintf_P( PSTR("  tx {u08|u16|u32|float} values\r\n"));
 		return;
 	}
 
@@ -666,19 +749,19 @@ int16_t free_size = sizeof(txbuffer);
 		i = strlen(txbuffer);
 		txbuffer[--i] = '\0';
 
-		lora_flush_RX_buffer();
+		lora_flush_rx_buffer();
 		xfprintf_P( fdLORA, PSTR("%s\r\n"),txbuffer );
 		xprintf_P( PSTR("sent->%s\r\n"),txbuffer );
 		vTaskDelay( ( TickType_t)( 250 / portTICK_RATE_MS ) );
 		lora_read_rx_data();
-		lora_print_RX_buffer();
+		lora_print_rx_data();
 		return;
 	}
 
 	if ( cmd_mode == RD_CMD ) {
 		// read lora
 		lora_read_rx_data();
-		lora_print_RX_buffer();
+		lora_print_rx_data();
 		return;
 	}
 

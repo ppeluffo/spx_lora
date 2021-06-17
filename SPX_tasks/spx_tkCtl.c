@@ -114,6 +114,11 @@ uint8_t wdg = 0;
 	// Configuro, inicializo y arranco los timers de contador ( caudalimetro de pulsos )
 	counter_init();
 
+	//--------------------------------------------------------------------------------
+	// Creo los buffer de trabajo de lora
+	u_lora_init();
+
+
 	// Habilito a arrancar al resto de las tareas
 	startTask = true;
 

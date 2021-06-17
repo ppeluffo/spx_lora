@@ -62,7 +62,7 @@
 // DEFINES
 //------------------------------------------------------------------------------------
 #define SPX_FW_REV "1.0.0a"
-#define SPX_FW_DATE "@ 20210615"
+#define SPX_FW_DATE "@ 20210617"
 
 #define SPX_HW_MODELO "spxR5 HW:xmega256A3B R1.1"
 #define SPX_FTROS_VERSION "FW:FRTOS10 Lora."
@@ -181,6 +181,7 @@ void u_save_params_in_NVMEE(void);
 bool u_load_params_from_NVMEE(void);
 void u_config_timerpoll ( char *s_timerpoll );
 void u_print_dr(file_descriptor_t fd, u_dataRecord_t *dr, uint16_t ctl );;
+void u_lora_init(void);
 
 // TKCTL
 void ctl_watchdog_kick(uint8_t taskWdg, uint16_t timeout_in_secs );
@@ -188,7 +189,6 @@ bool ctl_terminal_connected(void);
 
 // TKDATA
 void data_read_frame(bool poll_now );
-
 
 // WATCHDOG
 uint8_t wdg_resetCause;
