@@ -324,7 +324,11 @@ void u_print_dr(file_descriptor_t fd, u_dataRecord_t *dr, uint16_t ctl )
 
 	xfprintf_P(fd, PSTR(">PA:%.02f;"), dr->presion );
 
-	xfprintf_P(fd, PSTR("Q0:%.02f<"), dr->caudal );
+	xfprintf_P(fd, PSTR("Q0:%.02f;"), dr->caudal );
+
+	xfprintf_P(fd, PSTR("TEMP:%.02f<"), dr->temp );
+
+
 
 	// TAIL
 	// Esto es porque en gprs si mando un cr corto el socket !!!

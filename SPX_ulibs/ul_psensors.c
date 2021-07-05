@@ -21,10 +21,11 @@ uint8_t status;
 uint16_t p_counts;
 float presion_psi = -1.0;
 
-
 	// Leo la presion
-	if (  abp_raw_read( presion_id, (char *)data ) > 0 ) {
+	//if (  abp_raw_read( presion_id, (char *)data ) > 0 ) {
+	if (  abp_raw_read_and_sleep( presion_id, (char *)data ) > 0 ) {
 		status = data[0] >> 6;
+		//xprintf_P(PSTR("read_presion: STATUS=0x%0x\r\n"), status);
 		p_counts = ((data[0] & 0x3F) << 8) + data[1];
 		if ( p_counts < ABP_COUNTS_MIN ) {
 			presion_psi = 0.0;
@@ -67,6 +68,7 @@ bool psensor_read_test(void )
 t_presion_id presion_id;
 
 
+	_delay_ms(1000);
 	presion_id = PA;
 	if ( psensor_read(  presion_id , PSI, true ) < 0 ) {
 		return(false);

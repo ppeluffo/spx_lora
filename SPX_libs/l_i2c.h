@@ -32,4 +32,7 @@ void I2C_release_semaphore(void);
 int8_t I2C_write_R1 ( uint8_t i2c_bus_address, uint32_t chip_address, uint8_t chip_address_length, char *data, uint8_t length );
 int8_t I2C_read_R1( uint8_t i2c_bus_address, char *data, uint8_t length );
 
+void I2C_send_FMR(  uint8_t i2c_bus_address );
+void I2C_send_PMR(  uint8_t i2c_bus_address );
+
 #endif /* SPX_LIBS_L_I2C_H_ */

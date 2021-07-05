@@ -9,6 +9,12 @@
 #include "l_bytes.h"
 
 //------------------------------------------------------------------------------------
+// ONE_WIRE_PIN
+uint8_t IO_read_ONE_WIRE_PIN(void)
+{
+	return( PORT_GetBitValue(&ONE_WIRE_PORT, ONE_WIRE_BITPOS));
+}
+//------------------------------------------------------------------------------------
 // DRV8833_FAULT
 
 uint8_t IO_read_FAULT(void)

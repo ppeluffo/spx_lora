@@ -6,6 +6,7 @@
  */
 
 
+
 #include "ul_lora.h"
 
 
@@ -159,6 +160,32 @@ void lora_reset(void)
 
 }
 //------------------------------------------------------------------------------------
+bool lora_radio_status( bool f_debug )
+{
+
+	lora_flush_tx_buffer();
+	lora_flush_rx_buffer();
+	snprintf_P( loraTXbuffer, sizeof(loraTXbuffer), PSTR("radio get pwr\r\n") );
+	lora_send_cmd ( f_debug, 250);
+	lora_read_rx_data();
+
+	if ( f_debug )
+		lora_print_rx_data();
+
+	lora_flush_tx_buffer();
+	lora_flush_rx_buffer();
+	snprintf_P( loraTXbuffer, sizeof(loraTXbuffer), PSTR("radio get snr\r\n") );
+	lora_send_cmd ( f_debug, 250);
+	lora_read_rx_data();
+
+	if ( f_debug )
+		lora_print_rx_data();
+
+
+	// timeout
+	return(false);
+}
+//------------------------------------------------------------------------------------
 // COMANDOS SYS
 //------------------------------------------------------------------------------------
 bool lora_sys_reset(bool f_debug)
@@ -179,6 +206,23 @@ uint8_t timeout = 10;
 			return(true);
 		}
 	}
+
+	// timeout
+	return(false);
+
+}
+//------------------------------------------------------------------------------------
+bool lora_sys_sleep(bool f_debug, uint32_t millisec )
+{
+
+	lora_flush_tx_buffer();
+	lora_flush_rx_buffer();
+	snprintf_P( loraTXbuffer, sizeof(loraTXbuffer), PSTR("sys sleep %lu\r\n"), millisec );
+	lora_send_cmd ( f_debug, 250);
+	lora_read_rx_data();
+
+	if ( f_debug )
+		lora_print_rx_data();
 
 	// timeout
 	return(false);
@@ -522,6 +566,8 @@ bool retS = false;
 //------------------------------------------------------------------------------------
 uint16_t lora_mac_get_status( bool f_debug )
 {
+	// El valor retornado es un representacion en hexadecimal !!
+
 
 uint16_t status_word = 0;
 
@@ -530,7 +576,8 @@ uint16_t status_word = 0;
 	snprintf_P( loraTXbuffer, sizeof(loraTXbuffer), PSTR("mac get status\r\n") );
 	lora_send_cmd ( f_debug,1000);
 	lora_read_rx_data();
-	status_word = atoi( (char *)loraRXrbuffer.buff );
+	//status_word = atoi( (char *)loraRXrbuffer.buff );
+	status_word = (uint16_t)strtol((char *)loraRXrbuffer.buff, NULL, 16);
 
 	if ( f_debug )
 		lora_print_rx_data();
@@ -605,6 +652,19 @@ bool retS = false;
 	}
 
 	return(retS);
+}
+//------------------------------------------------------------------------------------
+bool lora_mac_set_dr( bool f_debug, uint8_t dr )
+{
+
+	lora_flush_tx_buffer();
+	lora_flush_rx_buffer();
+	snprintf_P( loraTXbuffer, sizeof(loraTXbuffer), PSTR("mac set dr %d\r\n"),dr );
+	lora_send_cmd ( f_debug,1000);
+	lora_read_rx_data();
+	if ( f_debug )
+		lora_print_rx_data();
+	return(true);
 }
 //------------------------------------------------------------------------------------
 lora_join_exit_codes_t lora_mac_join( bool f_debug, lora_join_t joincode )
@@ -861,15 +921,93 @@ lora_net_status_t net_status = NOT_JOIN;
 
 	status = lora_mac_get_status( f_debug );
 
-	if ( (status && 0x0001) == 0x00 ) {	// NOT_JOIN
+	if ( f_debug ) {
+		xprintf_P(PSTR("Status_word=0x%X, %dd\r\n"),status,status);
+
+		// b0:
+		if ( (status & 0x0001) > 0 ) {
+			xprintf_P(PSTR("  b0=1:net_joined\r\n"));
+		} else {
+			xprintf_P(PSTR("  b0=0:net_not_joined\r\n"));
+		}
+
+		// b1,b2,b3: MAC state
+		switch ((status & 0x000E) >> 1) {
+		case 0:
+			xprintf_P(PSTR("  b1,2,3=0:idle\r\n"));
+			break;
+		case 1:
+			xprintf_P(PSTR("  b1,2,3=1:transmission ocurring\r\n"));
+			break;
+		case 2:
+			xprintf_P(PSTR("  b1,2,3=2:before opening receive window\r\n"));
+			break;
+		case 3:
+			xprintf_P(PSTR("  b1,2,3=3:receive window is open\r\n"));
+			break;
+		case 4:
+			xprintf_P(PSTR("  b1,2,3=4:between receive window 1 and 2\r\n"));
+			break;
+		case 5:
+			xprintf_P(PSTR("  b1,2,3=5:Receive window 2 is open\r\n"));
+			break;
+		case 6:
+			xprintf_P(PSTR("  b1,2,3=6:Ack timeout\r\n"));
+		}
+
+		// b4:Automatic reply status
+		if ( (status & 0x0010) > 0 ) {
+			xprintf_P(PSTR("  b4=1:aut.reply disabled\r\n"));
+		} else {
+			xprintf_P(PSTR("  b4=0:aut.reply enabled\r\n"));
+		}
+
+		// b5:ADR status
+		if ( (status & 0x0020) > 0 ) {
+			xprintf_P(PSTR("  b5=1:adr enabled\r\n"));
+		} else {
+			xprintf_P(PSTR("  b5=0:adr disabled\r\n"));
+		}
+
+		// b6:Silent status
+		if ( (status & 0x0040) > 0 ) {
+			xprintf_P(PSTR("  b6=1:silent inmediate enabled\r\n"));
+		} else {
+			xprintf_P(PSTR("  b6=0:silent inmediate disabled\r\n"));
+		}
+
+		// b7: MAC paused
+		if ( (status & 0x0080) > 0 ) {
+			xprintf_P(PSTR("  b7=1:mac is paused\r\n"));
+		} else {
+			xprintf_P(PSTR("  b7=0:mac is not paused\r\n"));
+		}
+
+		// b8: RFU
+		//if ( (status && 0x0080) > 0 ) {
+		//	xprintf_P(PSTR("  b7=1:mac is paused\r\n"));
+		//} else {
+		//	xprintf_P(PSTR("  b7=0:mac is not paused\r\n"));
+		//}
+
+		// b9: Link Check status
+		if ( (status & 0x0200) > 0 ) {
+			xprintf_P(PSTR("  b9=1:link check is enabled\r\n"));
+		} else {
+			xprintf_P(PSTR("  b9=0:link check is disabled\r\n"));
+		}
+
+	}
+
+	if ( (status & 0x0001) == 0x00 ) {	// NOT_JOIN
 		net_status = NOT_JOIN;
 		if (f_debug) xprintf_P(PSTR("not join\r\n"));
 
-	} else if ( ( status && 0x000F) == 0x01 ) {// JOIN_IDLE:
+	} else if ( ( status & 0x000F) == 0x01 ) {// JOIN_IDLE:
 		net_status = JOIN_IDLE;
 		if (f_debug) xprintf_P(PSTR("join and idle\r\n"));
 
-	} else if ( ( status && 0x000F) != 0x01 ) {// JOIN_NOT_IDLE:
+	} else if ( ( status & 0x000F) != 0x01 ) {// JOIN_NOT_IDLE:
 		net_status = JOIN_NOT_IDLE;
 		if (f_debug) xprintf_P(PSTR("join but not idle\r\n"));
 	}
@@ -1005,7 +1143,8 @@ uint8_t channel = 0;
 
 	mask = 0x0000;
 	bitmask = atoi(s_64to80);
-	for ( i=0; i<16; i++ ) {
+	// Solo hasta el canal 71
+	for ( i=0; i<8; i++ ) {
 		mask = (1<<i);
 		bit = ( bitmask & mask ) >> i;
 		channel = 64 + i;
@@ -1092,3 +1231,168 @@ uint8_t status;
 	}
 }
 //------------------------------------------------------------------------------------
+// FSM
+//------------------------------------------------------------------------------------
+uint8_t lora_send_frame( bool f_debug, u_dataRecord_t *dr )
+{
+	// Pruebas: Solo escribe 2 floats.
+
+lora_tx_exit_codes_t tx_exit_code;
+
+	// Prepara el payload
+	lora_flush_payload_buffer();
+//	lora_rprintf_float(atof("123.10"));		// 0x42F63333
+//	lora_rprintf_float(atof("456.23"));		// 0x43E41D71
+
+	lora_rprintf_float( dr->presion );
+	lora_rprintf_float( dr->caudal );
+	lora_rprintf_float( dr->temp );
+
+	// Transmite
+	tx_exit_code = lora_mac_tx( true, UNCNF, 1 );
+	lora_print_payload_buffer();
+
+	return( tx_exit_code );
+}
+//------------------------------------------------------------------------------------
+void lora_trasmitir_datos( bool f_debug, u_dataRecord_t *dr )
+{
+	// Implementacion de la FSM que tranmite datos por el modulo lora
+
+lora_states_tx_fsm_t state = LTX_FSM_ENTRY;
+lora_net_status_t net_status;
+lora_tx_exit_codes_t tx_status;
+bool keys_status;
+uint8_t counter_tryes;
+uint8_t counter_keys;
+uint8_t counter_join;
+static uint8_t tx_errors = MAX_TX_ERRORS;
+
+	while(1) {
+
+		vTaskDelay( ( TickType_t)( 1000 / portTICK_RATE_MS ) );
+
+		switch ( state ) {
+
+		case LTX_FSM_ENTRY:
+			if ( f_debug )
+				xprintf_PD(f_debug, PSTR("FSM: Entry\r\n"));
+			// Vemos si estamos en condicion de transmitir o no.
+			net_status = lora_net_status(f_debug);
+			if ( net_status == JOIN_IDLE ) {
+				// Podemos transmitir
+				state = LTX_FSM_TX;
+			} else {
+				// No podemos transmitir. Vamos a ver de conectarnos
+				counter_tryes = 3;
+				state = LTX_FSM_TRYES;
+			}
+			break;
+
+		case LTX_FSM_TRYES:
+			if ( f_debug )
+				xprintf_PD(f_debug, PSTR("FSM: Try\r\n"));
+			if ( --counter_tryes > 0) {
+				counter_keys = 3;
+				state = LTX_FSM_KEYS;
+			} else {
+				lora_reset();
+				tx_errors = MAX_TX_ERRORS;
+				goto quit_fsm;
+			}
+			break;
+
+		case LTX_FSM_KEYS:
+			if ( f_debug )
+				xprintf_PD(f_debug, PSTR("FSM: Keys\r\n"));
+			keys_status = lora_mac_set_keys(f_debug, OTAA );
+			if ( keys_status ) {
+				counter_join = 3;
+				state = LTX_FSM_MAC_JOIN;
+			} else {
+				state = LTX_FSM_KEYS_FAIL;
+			}
+			break;
+
+		case LTX_FSM_KEYS_FAIL:
+			if ( f_debug )
+				xprintf_PD(f_debug, PSTR("FSM: Keys Fail\r\n"));
+			if ( --counter_keys > 0) {
+				state = LTX_FSM_KEYS;
+			} else {
+				lora_mac_reset(f_debug);
+				lora_mac_set_dr( f_debug, 2);
+				lora_enable_working_channels(f_debug, "65280", "0", "0", "0" ,"2" );
+				state = LTX_FSM_TRYES;
+			}
+			break;
+
+		case LTX_FSM_MAC_JOIN:
+			if ( f_debug )
+				xprintf_PD(f_debug, PSTR("FSM: Join\r\n"));
+			lora_mac_join (f_debug, OTAA);
+			net_status = lora_net_status(f_debug);
+			if ( net_status == JOIN_IDLE ) {
+				// Podemos transmitir
+				state = LTX_FSM_TX;
+			} else {
+				// No podemos transmitir. Vamos a ver de conectarnos
+				counter_tryes = 3;
+				state = LTX_FSM_MAC_JOIN_FAIL;
+			}
+			break;
+
+		case LTX_FSM_MAC_JOIN_FAIL:
+			if ( f_debug )
+				xprintf_PD(f_debug, PSTR("FSM: Join Fail\r\n"));
+			if ( --counter_join > 0) {
+				state = LTX_FSM_MAC_JOIN;
+			} else {
+				lora_mac_reset(f_debug);
+				lora_mac_set_dr(f_debug, 2);
+				lora_enable_working_channels(f_debug, "65280", "0", "0", "0" ,"2" );
+				state = LTX_FSM_TRYES;
+			}
+			break;
+
+		case LTX_FSM_TX:
+			if ( f_debug )
+				xprintf_PD(f_debug, PSTR("FSM: TX\r\n"));
+			// Transmito
+			tx_status = lora_send_frame( f_debug, dr);
+			if ( tx_status == TX_OK ) {
+				tx_errors = MAX_TX_ERRORS;
+				goto quit_fsm;
+			} else {
+				state = LTX_FSM_TX_FAIL;
+			}
+			break;
+
+		case LTX_FSM_TX_FAIL:
+			if ( f_debug )
+				xprintf_PD(f_debug, PSTR("FSM: TX_fail. err=%d\r\n"), tx_errors );
+			if ( --tx_errors > 0) {
+				goto quit_fsm;
+			} else {
+				//lora_reset();
+				lora_mac_reset(f_debug);
+				lora_mac_set_dr(f_debug, 2);
+				lora_enable_working_channels(f_debug, "65280", "0", "0", "0" ,"2" );
+				tx_errors = MAX_TX_ERRORS;
+				goto quit_fsm;
+			}
+			break;
+		}
+	}
+
+quit_fsm:
+
+	if ( f_debug )
+		xprintf_PD(f_debug, PSTR("FSM: Exit\r\n"));
+	return;
+
+
+
+}
+//------------------------------------------------------------------------------------
+

@@ -22,6 +22,45 @@
 #include "l_abp.h"
 
 //------------------------------------------------------------------------------------
+int8_t abp_raw_read_and_sleep( uint8_t sensor_id, char *data )
+{
+
+	// Mando un FNR y luego reinsisto con una lectura hasta que el status sea ok.
+
+
+int8_t rcode = -1;
+uint8_t times = 3;
+
+
+	// Leo en modo raw el sensor
+	I2C_get_semaphore();
+	//I2C_send_FMR(  BUSADDR_ABP );
+
+	while ( times-- > 0 ) {
+
+		// Leo 2 bytes del sensor de presion.
+		rcode =  I2C_read_R1( BUSADDR_ABP, data, 0x02 );
+		// Errores
+		if ( rcode == -1 ) {
+			// Hubo error: trato de reparar el bus y reintentar la operacion
+			// Espero 1s que se termine la fuente de ruido.
+			vTaskDelay( ( TickType_t)( 1000 / portTICK_RATE_MS ) );
+			// Reconfiguro los dispositivos I2C del bus que pueden haberse afectado
+			xprintf_P(PSTR("ERROR: ABP_raw_read recovering i2c bus (%d)\r\n\0"), times );
+			I2C_reinit_devices();
+		} else {
+			// No hubo error: salgo normalmente
+			break;
+		}
+
+		// Si el status no es OK, reintento
+
+	}
+
+	I2C_release_semaphore();
+	return( rcode );
+}
+//------------------------------------------------------------------------------------
 int8_t abp_raw_read( uint8_t sensor_id, char *data )
 {
 
@@ -62,6 +101,22 @@ uint8_t times = 1;
 	}
 
 	return( rcode );
+}
+//------------------------------------------------------------------------------------
+void abp_FMR(void)
+{
+	I2C_get_semaphore();
+	xprintf_P(PSTR("ABP DEBUG: Send FMR\r\n"));
+	I2C_send_FMR( BUSADDR_ABP );
+	I2C_release_semaphore();
+}
+//------------------------------------------------------------------------------------
+void abp_PMR(void)
+{
+	I2C_get_semaphore();
+	xprintf_P(PSTR("ABP DEBUG: Send PMR\r\n"));
+	I2C_send_PMR( BUSADDR_ABP );
+	I2C_release_semaphore();
 }
 //------------------------------------------------------------------------------------
 bool abp_raw_read_test( uint8_t sensor_id )

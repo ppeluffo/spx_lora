@@ -62,7 +62,7 @@
 // DEFINES
 //------------------------------------------------------------------------------------
 #define SPX_FW_REV "1.0.0a"
-#define SPX_FW_DATE "@ 20210617"
+#define SPX_FW_DATE "@ 20210705"
 
 #define SPX_HW_MODELO "spxR5 HW:xmega256A3B R1.1"
 #define SPX_FTROS_VERSION "FW:FRTOS10 Lora."
@@ -167,6 +167,7 @@ systemVarsType systemVars;
 typedef struct {
 	float presion;
 	float caudal;
+	float temp;
 } u_dataRecord_t;
 
 //--------------------------------------------------------------------------------------------------
@@ -183,12 +184,22 @@ void u_config_timerpoll ( char *s_timerpoll );
 void u_print_dr(file_descriptor_t fd, u_dataRecord_t *dr, uint16_t ctl );;
 void u_lora_init(void);
 
+void lora_trasmitir_datos( bool f_debug, u_dataRecord_t *dr );
+uint8_t lora_send_frame( bool f_debug, u_dataRecord_t *dr );
+
+
 // TKCTL
 void ctl_watchdog_kick(uint8_t taskWdg, uint16_t timeout_in_secs );
 bool ctl_terminal_connected(void);
+void ctl_reset_terminal_timer(void);
+
 
 // TKDATA
 void data_read_frame(bool poll_now );
+
+// 1WIRE
+double one_wire_gettemp(void );
+
 
 // WATCHDOG
 uint8_t wdg_resetCause;

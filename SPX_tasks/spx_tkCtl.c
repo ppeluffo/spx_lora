@@ -42,6 +42,8 @@ void tkCtl(void * pvParameters)
 
 	xprintf_P( PSTR("\r\nstarting tkControl..\r\n\0"));
 
+	//lora_sys_sleep(true, 60000 );
+
 	for( ;; )
 	{
 
@@ -130,12 +132,14 @@ static void pv_ctl_check_terminal_present(void)
 	// Si bien en la IO8 no es necesario desconectar la terminal ya que opera
 	// con corriente, por simplicidad uso un solo codigo para ambas arquitecturas.
 
+
 	//xprintf_P( PSTR("DEBUG terminal start..\r\n\0"));
 	if ( IO_read_TERMCTL_PIN() == 1) {
 		f_terminal_connected = true;
 	} else {
 		f_terminal_connected = false;
 	}
+//	f_terminal_connected = true;
 	//xprintf_P( PSTR("DEBUG terminal end..\r\n\0"));
 	return;
 }
@@ -145,12 +149,13 @@ static void pv_ctl_wink_led(void)
 
 	//xprintf_P( PSTR("DEBUG Led..\r\n\0"));
 	// SI la terminal esta desconectada salgo.
+/*
 	if ( ! ctl_terminal_connected() ) {
 		// Apago
 		IO_set_LED_KA();
 		return;
 	}
-
+*/
 	// Prendo los leds
 	IO_clr_LED_KA();
 

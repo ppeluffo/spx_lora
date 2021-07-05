@@ -23,7 +23,10 @@
 #define ABP_COUNTS_MIN 	1638
 
 int8_t abp_raw_read( uint8_t sensor_id, char *data );
+int8_t abp_raw_read_and_sleep( uint8_t sensor_id, char *data );
 bool abp_raw_read_test( uint8_t sensor_id );
+void abp_FMR(void);
+void abp_PMR(void);
 
 // API END
 //--------------------------------------------------------------------------------

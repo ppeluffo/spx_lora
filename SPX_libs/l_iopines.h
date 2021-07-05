@@ -40,6 +40,17 @@ void PORT_ConfigureInterrupt1( PORT_t * port,PORT_INT1LVL_t intLevel, uint8_t pi
 #define IO_clr_SCL()		PORT_ClearOutputBit( &SCL_PORT, SCL_BITPOS)
 
 //------------------------------------------------------------------------------------
+// 1-WIRE
+#define ONE_WIRE_PORT 	PORTA
+#define ONE_WIRE_BITPOS		2
+
+#define IO_config_1WIRE_ASOUTPUT()	PORT_SetPinAsOutput( &ONE_WIRE_PORT, ONE_WIRE_BITPOS)
+#define IO_config_1WIRE_ASINPUT()	PORT_SetPinAsInput( &ONE_WIRE_PORT, ONE_WIRE_BITPOS)
+#define IO_set_1WIRE()				PORT_SetOutputBit( &ONE_WIRE_PORT, ONE_WIRE_BITPOS)
+#define IO_clr_1WIRE()				PORT_ClearOutputBit( &ONE_WIRE_PORT, ONE_WIRE_BITPOS)
+
+uint8_t IO_read_ONE_WIRE_PIN(void);
+//------------------------------------------------------------------------------------
 // LORA RESET
 
 #define LORA_RESET_BITPOS	5
@@ -82,8 +93,12 @@ void PORT_ConfigureInterrupt1( PORT_t * port,PORT_INT1LVL_t intLevel, uint8_t pi
 #define TERMCTL_PIN_BITPOS			4
 #define TERMCTL_PIN_PORT			PORTF
 
+//#define TERMCTL_PIN_BITPOS			3
+//#define TERMCTL_PIN_PORT			PORTA
+
 #define IO_config_TERMCTL_PIN()			PORT_SetPinAsInput( &TERMCTL_PIN_PORT, TERMCTL_PIN_BITPOS)
 #define IO_config_TERMCTL_PULLDOWN()	PORTF.PIN4CTRL = PORT_OPC_PULLDOWN_gc
+//#define IO_config_TERMCTL_PULLDOWN()	PORTA.PIN3CTRL = PORT_OPC_PULLDOWN_gc
 
 uint8_t IO_read_TERMCTL_PIN(void);
 

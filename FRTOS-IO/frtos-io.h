@@ -87,6 +87,8 @@ StaticSemaphore_t I2C_xMutexBuffer;
 #define ioctl_I2C_SET_CHIPADDRESSLENGTH	16
 #define ioctl_I2C_GET_LAST_ERROR		17
 #define ioctl_I2C_SCAN					18
+#define ioctl_SEND_FMR					19
+#define ioctl_SEND_PMR					20
 
 #define I2C_OK			0
 #define I2C_RD_ERROR	1

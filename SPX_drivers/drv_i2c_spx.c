@@ -126,7 +126,7 @@ int xReturn = -1;
 	xprintf_P( PSTR("drv_i2c: MasterRead: devAddr=0x%02x, length=0x%02x\r\n\0"),devAddress, xBytes );
 #endif
 
-	if ( xBytes < 1 ) return(false);
+	//if ( xBytes < 1 ) return(false);
 
 	TWIE.MASTER.CTRLA |= ( 1<<TWI_MASTER_ENABLE_bp);	// Enable TWI
 
@@ -189,6 +189,38 @@ bool ret_code = false;
 i2c_quit:
 
 	return(ret_code);
+}
+//------------------------------------------------------------------------------------
+int drv_I2C_write_FMR( const uint8_t devAddress )
+{
+	// Envia un FMR.
+	// Consiste en madar el devAddress con 1 y al recibir el ACK generar el STOP
+	xprintf_P( PSTR("I2C DEBUG: FMR \r\n\0"));
+	TWIE.MASTER.CTRLA |= ( 1<<TWI_MASTER_ENABLE_bp);
+
+	if ( ! pvI2C_write_slave_address(devAddress | 0x01) ) {
+		xprintf_P( PSTR("I2C DEBUG: FMR no ACK\r\n\0"));
+	}
+	// Recibi el ACK. Mando el STOP
+	TWIE.MASTER.CTRLC = TWI_MASTER_CMD_STOP_gc;
+
+	return(1);
+
+}
+//------------------------------------------------------------------------------------
+int drv_I2C_write_PMR( const uint8_t devAddress )
+{
+	// Envia un RDF.
+	// Consiste en madar el devAddress con 0 y al recibir el ACK generar el STOP
+	xprintf_P( PSTR("I2C DEBUG: RDF \r\n\0"));
+	TWIE.MASTER.CTRLA |= ( 1<<TWI_MASTER_ENABLE_bp);
+
+	if ( ! pvI2C_write_slave_address(devAddress | 0x00) ) {
+		xprintf_P( PSTR("I2C DEBUG: PMR no ACK\r\n\0"));
+	}
+	// Recibi el ACK. Mando el STOP
+	TWIE.MASTER.CTRLC = TWI_MASTER_CMD_STOP_gc;
+	return(1);
 }
 //------------------------------------------------------------------------------------
 // FUNCIONES AUXILIARES PRIVADAS DE I2C

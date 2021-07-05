@@ -395,6 +395,12 @@ uint32_t *p = NULL;
 			case ioctl_I2C_SCAN:
 				xReturn = drv_I2C_scan_device(xI2c->devAddress );
 				break;
+			case ioctl_SEND_FMR:
+				xReturn = drv_I2C_write_FMR(xI2c->devAddress );
+				break;
+			case ioctl_SEND_PMR:
+				xReturn = drv_I2C_write_PMR(xI2c->devAddress );
+				break;
 			default :
 				xReturn = -1;
 				break;

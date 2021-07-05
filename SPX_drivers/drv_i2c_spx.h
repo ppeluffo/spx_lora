@@ -30,6 +30,9 @@ int drv_I2C_master_read_R1  ( const uint8_t devAddress, char *pvBuffer, size_t x
 void drv_I2C_init(void);
 bool drv_I2C_scan_device( const uint8_t devAddress );
 
+int drv_I2C_write_FMR( const uint8_t devAddress );
+int drv_I2C_write_PMR( const uint8_t devAddress );
+
 //#define DEBUG_I2C
 
 #endif /* SRC_SPX_DRIVERS_DRV_I2C_SPX_H_ */

@@ -39,6 +39,8 @@ char txbuffer[LORA_RXBUFFER];
 
 bool lora_loopback;
 
+bool sleeping;
+
 //------------------------------------------------------------------------------------
 void tkCmd(void * pvParameters)
 {
@@ -74,6 +76,8 @@ uint8_t ticks = 0;
 
 	xprintf_P( PSTR("starting tkCmd..\r\n") );
 
+	sleeping = false;
+
 	//FRTOS_CMD_regtest();
 	// loop
 	for( ;; )
@@ -83,9 +87,15 @@ uint8_t ticks = 0;
 		ctl_watchdog_kick(WDG_CMD, WDG_CMD_TIMEOUT);
 
 		// Si no tengo terminal conectada, duermo 25s lo que me permite entrar en tickless.
+
+		while ( sleeping ) {
+			ctl_watchdog_kick(WDG_CMD, WDG_CMD_TIMEOUT);
+			vTaskDelay( ( TickType_t)( 10000 / portTICK_RATE_MS ) );
+		}
+
 		while ( ! ctl_terminal_connected() ) {
 			ctl_watchdog_kick(WDG_CMD, WDG_CMD_TIMEOUT);
-			vTaskDelay( ( TickType_t)( 25000 / portTICK_RATE_MS ) );
+			vTaskDelay( ( TickType_t)( 10000 / portTICK_RATE_MS ) );
 		}
 
 		c = '\0';	// Lo borro para que luego del un CR no resetee siempre el timer.
@@ -94,6 +104,8 @@ uint8_t ticks = 0;
 		while ( frtos_read( fdTERM, (char *)&c, 1 ) == 1 ) {
 			FRTOS_CMD_process(c);
 		}
+
+//		vTaskDelay( ( TickType_t)( 10000 / portTICK_RATE_MS ) );
 
 	}
 }
@@ -104,10 +116,34 @@ static void cmdLoraFunction(void)
 
 uint8_t i,j;
 int16_t free_size = sizeof(txbuffer);
+uint16_t syncword;
 
 	FRTOS_CMD_makeArgv();
 
 	// LORA
+
+	// lora radiostatus
+	if ( strcmp_P( argv[1], PSTR("radiostatus")) == 0)  {
+		lora_radio_status( true );
+		pv_snprintfP_OK();
+		return;
+	}
+
+	// lora sleep ms
+	if ( strcmp_P( argv[1], PSTR("sleep")) == 0)  {
+		sleeping = true;
+		lora_sys_sleep( true, 5000 );
+		pv_snprintfP_OK();
+		return;
+	}
+
+	// lora tx {u08|u16|u32|float} values
+	if ( strcmp_P( argv[1], PSTR("fsm")) == 0)  {
+		lora_trasmitir_datos( true, NULL );
+		pv_snprintfP_OK();
+		return;
+	}
+
 
 	// lora tx {u08|u16|u32|float} values
 	if ( strcmp_P( argv[1], PSTR("tx")) == 0)  {
@@ -183,7 +219,8 @@ int16_t free_size = sizeof(txbuffer);
 
 	// lora macgetstatus
 	if ( strcmp_P( argv[1], PSTR("macgetstatus")) == 0)  {
-		xprintf_P(PSTR("status_word=0x%0X\r\n"), lora_mac_get_status( true ) );
+		syncword = lora_mac_get_status( true );
+		xprintf_P(PSTR("status_word=0x%0X, %d\r\n"), syncword,syncword  );
 		return;
 	}
 
@@ -195,7 +232,7 @@ int16_t free_size = sizeof(txbuffer);
 
 	// lora macgetsync
 	if ( strcmp_P( argv[1], PSTR("macgetsync")) == 0)  {
-		xprintf_P(PSTR("sync=0x%0X\r\n"), lora_mac_get_sync( true ) );
+		xprintf_P(PSTR("sync=0x%0X,\r\n"), lora_mac_get_sync( true ) );
 		return;
 	}
 
@@ -232,7 +269,8 @@ int16_t free_size = sizeof(txbuffer);
 
 	// lora netstatus
 	if ( strcmp_P( argv[1], PSTR("netstatus")) == 0)  {
-		xprintf_P(PSTR("net stats = %d\r\n"), lora_net_status(true));
+		syncword = lora_net_status(true);
+		xprintf_P(PSTR("net stats = %d\r\n"), syncword );
 		return;
 	}
 
@@ -254,7 +292,7 @@ int16_t free_size = sizeof(txbuffer);
 	}
 
 	// Comandos no manejados: directo al modulo
-	xprintf_P(PSTR("Comando no interpretado.\r\n"));
+	xprintf_P(PSTR("Cmd to lora module.\r\n"));
 	lora_flush_rx_buffer();
 	i = 1;
 	j = 0;
@@ -387,6 +425,13 @@ static void cmdWriteFunction(void)
 		return;
 	}
 
+	// FMR
+	// write fmr
+	if ( strcmp_P( strupr(argv[1]), PSTR("FMR\0")) == 0)  {
+		abp_FMR();
+		return;
+	}
+
 	// CMD NOT FOUND
 	xprintf_P( PSTR("ERROR\r\nCMD NOT DEFINED\r\n\0"));
 	return;
@@ -395,7 +440,17 @@ static void cmdWriteFunction(void)
 static void cmdReadFunction(void)
 {
 
+float temp;
+
 	FRTOS_CMD_makeArgv();
+
+	// 1WIRE
+	// read 1wire
+	if ( strcmp_P( argv[1], PSTR("1wire")) == 0)  {
+		temp = one_wire_gettemp();
+		xprintf_P(PSTR("Temp=%0.3f\r\n"), temp );
+		return;
+	}
 
 	// LORA
 	// read lora
@@ -561,6 +616,7 @@ static void cmdHelpFunction(void)
 		xprintf_P( PSTR("  scanchannels, loopback {on|off}\r\n"));
 		xprintf_P( PSTR("  payload {u08|u16|u32|float} value\r\n"));
 		xprintf_P( PSTR("  tx {u08|u16|u32|float} values\r\n"));
+		xprintf_P( PSTR("  radiostatus, sleep (ms)\r\n"));
 		return;
 	}
 
@@ -568,6 +624,7 @@ static void cmdHelpFunction(void)
 	if (!strcmp_P( strupr(argv[1]), PSTR("WRITE\0"))) {
 		xprintf_P( PSTR("-write\r\n\0"));
 		xprintf_P( PSTR("  (nvmee) {pos} {string}\r\n\0"));
+		xprintf_P( PSTR("  fmr\r\n\0"));
 		return;
 	}
 
@@ -576,7 +633,7 @@ static void cmdHelpFunction(void)
 		xprintf_P( PSTR("-read\r\n\0"));
 		xprintf_P( PSTR("  frame, fuses\r\n\0"));
 		xprintf_P( PSTR("  psensor,presion\r\n\0"));
-		xprintf_P( PSTR("  caudal\r\n"));
+		xprintf_P( PSTR("  caudal, 1wire\r\n"));
 		xprintf_P( PSTR("  frame\r\n\0"));
 		return;
 	}

@@ -46,11 +46,18 @@ typedef enum { TX_OK = 0,
 	TX_MAC_PAUSED,
 	TX_INVALID_DATA_LEN,
 	TX_MAC_ERR,
-
-
 	TX_ERROR } lora_tx_exit_codes_t;
 
 typedef enum { JOIN_IDLE = 0, JOIN_NOT_IDLE, NOT_JOIN } lora_net_status_t;
+
+typedef enum { LTX_FSM_ENTRY=0,
+	LTX_FSM_TRYES,
+	LTX_FSM_KEYS,
+	LTX_FSM_MAC_JOIN,
+	LTX_FSM_KEYS_FAIL,
+	LTX_FSM_MAC_JOIN_FAIL,
+	LTX_FSM_TX,
+	LTX_FSM_TX_FAIL } lora_states_tx_fsm_t;
 
 char loraTXbuffer[LORA_BUFFER_LEN];
 
@@ -79,6 +86,8 @@ void lora_test_payload( char *s_modo, char *s_value);
 void lora_reset(void);
 bool lora_sys_reset(bool f_debug);
 char *lora_sys_get_ver(bool f_debug);
+bool lora_sys_sleep(bool f_debug, uint32_t millisec );
+bool lora_radio_status( bool f_debug );
 
 void lora_config_defaults(void);
 void lora_config_keys_testing(void);
@@ -104,6 +113,7 @@ void lora_scan_all_channels(void);
 
 void lora_set_ch_off(void);
 
+bool lora_mac_set_dr( bool f_debug, uint8_t dr );
 uint8_t lora_mac_get_sync( bool f_debug );
 uint32_t lora_mac_get_upctr( bool f_debug );
 bool lora_mac_set_keys( bool f_debug, lora_join_t joincode );
@@ -114,11 +124,14 @@ lora_tx_exit_codes_t lora_mac_tx( bool f_debug, uint8_t tx_mode, uint8_t tx_port
 bool lora_test_tx( char *argv[]);
 
 
+
 #define lora_connect_abp(f_debug) 			lora_connect(f_debug, ABP)
 #define lora_connect_otaa(f_debug) 			lora_connect(f_debug, OTAA)
 #define lora_mac_set_keys_abp(f_debug)		lora_mac_set_keys(f_debug, ABP)
 #define lora_mac_set_keys_otaa(f_debug)		lora_mac_set_keys(f_debug, OTAA)
 #define lora_mac_join_abp(f_debug)			lora_mac_join(f_debug, ABP)
 #define lora_mac_join_otaa(f_debug)			lora_mac_join(f_debug, OTAA)
+
+#define MAX_TX_ERRORS	3
 
 #endif /* SRC_SPX_ULIBS_UL_LORA_H_ */

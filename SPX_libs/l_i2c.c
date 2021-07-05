@@ -181,4 +181,16 @@ uint8_t i2c_error_code = 0;
 
 }
 //------------------------------------------------------------------------------------
+void I2C_send_FMR(  uint8_t i2c_bus_address )
+{
+	frtos_ioctl(fdI2C, ioctl_I2C_SET_DEVADDRESS, &i2c_bus_address );
+	frtos_ioctl( fdI2C,ioctl_SEND_FMR, NULL);
+}
+//------------------------------------------------------------------------------------
+void I2C_send_PMR(  uint8_t i2c_bus_address )
+{
+	frtos_ioctl(fdI2C,ioctl_I2C_SET_DEVADDRESS, &i2c_bus_address );
+	frtos_ioctl( fdI2C,ioctl_SEND_PMR, NULL);
+}
+//------------------------------------------------------------------------------------
 

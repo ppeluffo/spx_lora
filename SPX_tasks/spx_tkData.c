@@ -55,8 +55,9 @@ uint32_t waiting_ticks;
  		// Espero. Da el tiempo necesario para entrar en tickless.
  		vTaskDelayUntil( &xLastWakeTime, waiting_ticks );
 
-		//pv_data_read_inputs( &dataRecd, false );
-		//u_print_dr( fdTERM, &dataRecd, 0 );
+		pv_data_read_inputs( &dataRecd, false );
+		u_print_dr( fdTERM, &dataRecd, 0 );
+		lora_trasmitir_datos(true, &dataRecd);
 		pv_data_calcular_waiting_ticks( &waiting_ticks );
 
 		//u_SEND_SIGNAL( SGN_FRAME_READY );
@@ -75,9 +76,10 @@ static void pv_data_read_inputs( u_dataRecord_t *dr, bool f_debug)
 
 	// Leo las presiones
 	dr->presion = psensor_read( PA, KGM_CM2, DF_DATA );
-
 	// Leo el caudal
 	dr->caudal = counter_read_caudal_ltsxs();
+	// Temperatura
+	dr->temp = one_wire_gettemp();
 
 }
 //------------------------------------------------------------------------------------
